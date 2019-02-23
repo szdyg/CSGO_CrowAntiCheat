@@ -25,3 +25,9 @@
 #### 驱动要做的:
 #### 1. MmUnloadedDriver扫描 *
 #### 2. 剥离csrss.exe 、 lsass.exe的句柄 *
+
+使用方法：
+
+生成CrowAntiCheat_Client.exe 和 test.sys文件，置于同一个文件夹下，管理员权限运行CrowAntiCheat_Client.exe，然后任意找一个程序改名为csgo.exe再运行
+
+整个流程写在了 start.bat 里

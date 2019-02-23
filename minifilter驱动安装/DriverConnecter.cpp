@@ -75,7 +75,7 @@ void shit2()
 }
 void DriverConnecter::AntiCheatDriverCallbacks()
 {
-	CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)shit2, NULL, NULL, NULL);
+	//CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)shit2, NULL, NULL, NULL);
 	HANDLE port;
 	DWORD dwRet;
 	NMiniFilterPort PARM;
@@ -120,7 +120,7 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 				
 				Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
 			}break;
-			case ENUM_MSG_HADLE_PROCESS:
+			case ENUM_MSG_HADLE_PROCESS:  
 			{
 				//ENUM_MSG_HADLE_PROCESS = 常规打开进程操作
 				std::string FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
@@ -129,7 +129,7 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 				else
 					printf("FilePatch is null , what ? \n");
 
-			}break;
+			}break;  
 			case ENUM_MSG_HADLE_THREAD:
 			{
 				

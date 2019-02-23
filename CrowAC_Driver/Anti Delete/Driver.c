@@ -327,7 +327,6 @@ BOOL NTAPI GetNtDeviceName(WCHAR * filename, WCHAR * ntname)
 }
 FLT_PREOP_CALLBACK_STATUS PreCreateSection(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _Flt_CompletionContext_Outptr_ PVOID *CompletionContext) {
 	FLT_PREOP_CALLBACK_STATUS ret = FLT_PREOP_SUCCESS_NO_CALLBACK;
-
 	if (Data->Iopb->Parameters.AcquireForSectionSynchronization.SyncType == SyncTypeCreateSection) {
 		PFLT_FILE_NAME_INFORMATION pNameInfo = NULL;
 		if (NT_SUCCESS(FltGetFileNameInformation(Data, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &pNameInfo))) {
@@ -338,7 +337,9 @@ FLT_PREOP_CALLBACK_STATUS PreCreateSection(_Inout_ PFLT_CALLBACK_DATA Data, _In_
 					notification = ExAllocatePoolWithTag(NonPagedPool,
 						sizeof(COMMAND_MESSAGE),
 						'nacS');
+					DbgPrintEx(0, 0, "path is %S\n", pNameInfo->Name.Buffer);
 					GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
+					
 					reply.MSG_TYPE = ENUM_MSG_DLL;
 					notification->MSG_TYPE = ENUM_MSG_DLL;
 					//DbgPrintEx(0, 0, "pNameInfo->Name.Buffer is %wZ\n", pNameInfo->Name);
@@ -351,6 +352,7 @@ FLT_PREOP_CALLBACK_STATUS PreCreateSection(_Inout_ PFLT_CALLBACK_DATA Data, _In_
 						//DbgPrintEx(0, 0, "path is %S\n", notification->Contents);
 						if (reply.Command == ENUM_PASS)
 						{
+							DbgPrintEx(0, 0, "path is %S\n", pNameInfo->Name.Buffer);
 							DbgPrintEx(0, 0, "\n Pass Dll: %wZ \n", pNameInfo->Name);
 							return ret;
 						}
@@ -480,30 +482,30 @@ OB_PREOP_CALLBACK_STATUS ProcessHandleCallbacks(PVOID RegistrationContext, POB_P
 
 	ULONG ulProcessId = PsGetProcessId(OpenedProcess);
 
-	if (PsGetProcessId((PEPROCESS)OperationInformation->Object) == GamePid)
-	{
-		//DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,PID: %s \n", PsGetProcessImageFileName(PsGetCurrentProcess()));
-			
-		PCOMMAND_MESSAGE notification = NULL;
-		COMMAND_MESSAGE reply;
-	//	notification = ExAllocatePoolWithTag(NonPagedPool,sizeof(COMMAND_MESSAGE),'nacS');
-	//	GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
-	//	reply.MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
-	//	notification->MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
-	//	notification->Pid = PsGetCurrentProcessId();
-	//	ULONG replyLength = sizeof(COMMAND_MESSAGE);
-	//	NTSTATUS status = FltSendMessage(Filter, &g_ClientPort, notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
-	//	if (!NT_SUCCESS(status))
-	//		DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,Send MeG Fail PID: %d \n", PsGetCurrentProcessId());
-		if (OperationInformation->Operation == OB_OPERATION_HANDLE_CREATE) // striping handle 
-		{
-			OperationInformation->Parameters->CreateHandleInformation.DesiredAccess = (SYNCHRONIZE);
-		}
-		else
-		{
-			OperationInformation->Parameters->DuplicateHandleInformation.DesiredAccess = (SYNCHRONIZE);
-		}
-	}
+	//if (PsGetProcessId((PEPROCESS)OperationInformation->Object) == GamePid)
+	//{
+	//	//DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,PID: %s \n", PsGetProcessImageFileName(PsGetCurrentProcess()));
+	//		
+	//	PCOMMAND_MESSAGE notification = NULL;
+	//	COMMAND_MESSAGE reply;
+	////	notification = ExAllocatePoolWithTag(NonPagedPool,sizeof(COMMAND_MESSAGE),'nacS');
+	////	GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
+	////	reply.MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
+	////	notification->MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
+	////	notification->Pid = PsGetCurrentProcessId();
+	////	ULONG replyLength = sizeof(COMMAND_MESSAGE);
+	////	NTSTATUS status = FltSendMessage(Filter, &g_ClientPort, notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
+	////	if (!NT_SUCCESS(status))
+	////		DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,Send MeG Fail PID: %d \n", PsGetCurrentProcessId());
+	//	if (OperationInformation->Operation == OB_OPERATION_HANDLE_CREATE) // striping handle 
+	//	{
+	//		OperationInformation->Parameters->CreateHandleInformation.DesiredAccess = (SYNCHRONIZE);
+	//	}
+	//	else
+	//	{
+	//		OperationInformation->Parameters->DuplicateHandleInformation.DesiredAccess = (SYNCHRONIZE);
+	//	}
+	//}
 	return OB_PREOP_SUCCESS;
 }
 //×°ÉÏcallbacks

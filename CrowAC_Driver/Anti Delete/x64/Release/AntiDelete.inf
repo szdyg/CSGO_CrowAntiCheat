@@ -8,7 +8,7 @@ Class=Sample ; TODO: edit Class
 ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171} ; TODO: edit ClassGuid
 Provider=%ManufacturerName%
 CatalogFile=AntiDelete.cat
-DriverVer = 02/23/2019,13.1.1.922
+DriverVer = 02/24/2019,18.18.30.764
 
 [DestinationDirs]
 DefaultDestDir = 12

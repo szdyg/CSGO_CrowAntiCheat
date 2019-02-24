@@ -409,17 +409,21 @@ VOID CreateProcessNotifyRoutine(IN HANDLE hParentId,IN HANDLE hProcessId,IN BOOL
 //用于记录DLL和驱动加载
 VOID LoadImageNotifyRoutine(IN PUNICODE_STRING FullImageName, IN HANDLE ProcessID, IN PIMAGE_INFO ImageInfo)
 {
-	;
+	
 //	DbgPrintEx(0, 0, "Loaded Modules. ProcessID = %d, ThreadID = %d, Full ImageInfo = %d \n", ProcessID, ProcessID, ImageInfo);
 	//如果是CSGO的进程一定有client.dll 所以是 if (wcsstr(FullImageName->Buffer, L"\\csgo\\bin\\client.dll")) 以及判断数字签名
 	//直接从这里得到游戏ID只是临时测试用的,一定要一个R3的客户端去启动CSGO防止有些挂通过父进程得到句柄权限.
 	
-	if (wcsstr(FullImageName->Buffer, L"\\csgo.exe")) {
-		GamePid = ProcessID;
-		DbgPrintEx(0, 0, "Found Game PID! \n");
-	}
-	if (ProcessID == GamePid)
+	if (wcsstr(FullImageName->Buffer, L"\\csgo.exe")) 
 	{
+		//DbgPrintEx(0, 0, "process name111%s111", PsGetProcessImageFileName(PsGetCurrentProcess()));
+		if (strcmp(PsGetProcessImageFileName(PsGetCurrentProcess()), "csgo.exe")==0)
+		{
+			GamePid = ProcessID;
+			DbgPrintEx(0, 0, "Found Game PID! \n");
+			DbgPrintEx(0, 0, "process name: %s \n", PsGetProcessImageFileName(PsGetCurrentProcess()));
+		}
+		
 	}
 	
 	//稍微检查一下是否有外挂模块注入到其他的进程里,不用了,垃圾玩意
@@ -482,30 +486,69 @@ OB_PREOP_CALLBACK_STATUS ProcessHandleCallbacks(PVOID RegistrationContext, POB_P
 
 	ULONG ulProcessId = PsGetProcessId(OpenedProcess);
 
-	//if (PsGetProcessId((PEPROCESS)OperationInformation->Object) == GamePid)
-	//{
-	//	//DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,PID: %s \n", PsGetProcessImageFileName(PsGetCurrentProcess()));
-	//		
-	//	PCOMMAND_MESSAGE notification = NULL;
-	//	COMMAND_MESSAGE reply;
-	////	notification = ExAllocatePoolWithTag(NonPagedPool,sizeof(COMMAND_MESSAGE),'nacS');
-	////	GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
-	////	reply.MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
-	////	notification->MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
-	////	notification->Pid = PsGetCurrentProcessId();
-	////	ULONG replyLength = sizeof(COMMAND_MESSAGE);
-	////	NTSTATUS status = FltSendMessage(Filter, &g_ClientPort, notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
-	////	if (!NT_SUCCESS(status))
-	////		DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,Send MeG Fail PID: %d \n", PsGetCurrentProcessId());
-	//	if (OperationInformation->Operation == OB_OPERATION_HANDLE_CREATE) // striping handle 
-	//	{
-	//		OperationInformation->Parameters->CreateHandleInformation.DesiredAccess = (SYNCHRONIZE);
-	//	}
-	//	else
-	//	{
-	//		OperationInformation->Parameters->DuplicateHandleInformation.DesiredAccess = (SYNCHRONIZE);
-	//	}
-	//}
+	if (PsGetProcessId((PEPROCESS)OperationInformation->Object) == GamePid)
+	{
+		DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,PID: %s \n", PsGetProcessImageFileName(PsGetCurrentProcess()));
+			
+		PCOMMAND_MESSAGE notification = NULL;
+		COMMAND_MESSAGE reply;
+	//	notification = ExAllocatePoolWithTag(NonPagedPool,sizeof(COMMAND_MESSAGE),'nacS');
+	//	GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
+	//	reply.MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
+	//	notification->MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
+	//	notification->Pid = PsGetCurrentProcessId();
+	//	ULONG replyLength = sizeof(COMMAND_MESSAGE);
+	//	NTSTATUS status = FltSendMessage(Filter, &g_ClientPort, notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
+	//	if (!NT_SUCCESS(status))
+	//		DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,Send MeG Fail PID: %d \n", PsGetCurrentProcessId());
+		if (OperationInformation->Operation == OB_OPERATION_HANDLE_CREATE) // striping handle 
+		{
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_TERMINATE) == PROCESS_TERMINATE)
+			{
+				//Terminate the process, such as by calling the user-mode TerminateProcess routine..
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_TERMINATE;
+			}
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_OPERATION) == PROCESS_VM_OPERATION)
+			{
+				//Modify the address space of the process, such as by calling the user-mode WriteProcessMemory and VirtualProtectEx routines.
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_OPERATION;
+			}
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_READ) == PROCESS_VM_READ)
+			{
+				//Read to the address space of the process, such as by calling the user-mode ReadProcessMemory routine.
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_READ;
+			}
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_WRITE) == PROCESS_VM_WRITE)
+			{
+				//Write to the address space of the process, such as by calling the user-mode WriteProcessMemory routine.
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_WRITE;
+			}
+
+		}
+		if (OperationInformation->Operation == OB_OPERATION_HANDLE_DUPLICATE)
+		{
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_TERMINATE) == PROCESS_TERMINATE)
+			{
+				//Terminate the process, such as by calling the user-mode TerminateProcess routine..
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_TERMINATE;
+			}
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_OPERATION) == PROCESS_VM_OPERATION)
+			{
+				//Modify the address space of the process, such as by calling the user-mode WriteProcessMemory and VirtualProtectEx routines.
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_OPERATION;
+			}
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_READ) == PROCESS_VM_READ)
+			{
+				//Read to the address space of the process, such as by calling the user-mode ReadProcessMemory routine.
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_READ;
+			}
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_WRITE) == PROCESS_VM_WRITE)
+			{
+				//Write to the address space of the process, such as by calling the user-mode WriteProcessMemory routine.
+				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_WRITE;
+			}
+		}
+	}
 	return OB_PREOP_SUCCESS;
 }
 //装上callbacks

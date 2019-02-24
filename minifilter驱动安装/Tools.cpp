@@ -5,15 +5,15 @@
 PEreverse PEreverser;
 void SendMd52Server(LPVOID p)
 {
-	ThreadParms Parms = *(ThreadParms*)p;
-	CString FileDirectory = Parms.FileDirectory;
-	int ScanType = Parms.ScanType;
+	ThreadParms* Parms = (ThreadParms*)p;
+	CString FileDirectory = Parms->FileDirectory;
+	int ScanType = Parms->ScanType;
 	bool ReportToServer = false;
 	CString md5;
 	MyTools::GetFileMd5(FileDirectory, md5);
 	if(ScanType == SCANTYPE_HIIGHT)
 	{
-		HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, Parms.PID);
+		HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, Parms->PID);
 		MEMORY_BASIC_INFORMATION mbi_thunk;
 		PVOID AllocationBase = NULL;
 		TCHAR FilePath[MAX_PATH];

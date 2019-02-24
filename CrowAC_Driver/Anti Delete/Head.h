@@ -17,6 +17,11 @@
 #include <wdf.h>
 #include <ntdef.h>
 
+#define PROCESS_TERMINATE         0x0001  
+#define PROCESS_VM_OPERATION      0x0008  
+#define PROCESS_VM_READ           0x0010  
+#define PROCESS_VM_WRITE          0x0020 
+
 HANDLE CallbacksHandle;
 ULONG GamePid = -1;
 DRIVER_INITIALIZE DriverEntry;

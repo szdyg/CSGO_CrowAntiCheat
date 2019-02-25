@@ -107,7 +107,7 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 			{
 				printf("DLL : %ws \n", data.Notification.Contents); 
 				dataReplay.cmdMessage.Command = ENUM_PASS;
-				/*
+				
 				if(Tools->CheckFileTrust(data.Notification.Contents))
 					dataReplay.cmdMessage.Command = ENUM_PASS;
 				else
@@ -116,7 +116,7 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 					dataReplay.cmdMessage.Command = ENUM_BLOCK;
 					//不是我们的白名单中的签名加入到了游戏进程中.上传到服务器.
 					//..
-				}*/
+				}
 				
 				Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
 			}break;

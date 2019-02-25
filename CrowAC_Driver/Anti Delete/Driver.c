@@ -417,7 +417,7 @@ VOID LoadImageNotifyRoutine(IN PUNICODE_STRING FullImageName, IN HANDLE ProcessI
 	if (wcsstr(FullImageName->Buffer, L"\\csgo.exe")) 
 	{
 		//DbgPrintEx(0, 0, "process name111%s111", PsGetProcessImageFileName(PsGetCurrentProcess()));
-		if (strcmp(PsGetProcessImageFileName(PsGetCurrentProcess()), "csgo.exe")==0)
+		if (strstr(PsGetProcessImageFileName(PsGetCurrentProcess()), "csgo.exe"))
 		{
 			GamePid = ProcessID;
 			DbgPrintEx(0, 0, "Found Game PID! \n");
@@ -513,7 +513,7 @@ OB_PREOP_CALLBACK_STATUS ProcessHandleCallbacks(PVOID RegistrationContext, POB_P
 				//Modify the address space of the process, such as by calling the user-mode WriteProcessMemory and VirtualProtectEx routines.
 				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_OPERATION;
 			}
-			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_READ) == PROCESS_VM_READ)
+			if ((OperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess & PROCESS_VM_READ) == PROCESS_VM_READ) 
 			{
 				//Read to the address space of the process, such as by calling the user-mode ReadProcessMemory routine.
 				OperationInformation->Parameters->CreateHandleInformation.DesiredAccess &= ~PROCESS_VM_READ;

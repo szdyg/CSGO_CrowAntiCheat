@@ -1,18 +1,18 @@
 #include "stdafx.h"
 #include "DriverInstall.h"
-BOOL DriverInstall::InstallDriver(const char* lpszDriverName, const char* lpszDriverPath, const char* lpszAltitude)
+BOOL DriverInstall::InstallDriver(const CHAR* lpszDriverName, const CHAR* lpszDriverPath, const CHAR* lpszAltitude)
 {
-	char    szTempStr[MAX_PATH];
+	CHAR    szTempStr[MAX_PATH];
 	HKEY    hKey;
 	DWORD    dwData;
-	char    szDriverImagePath[MAX_PATH];
+	CHAR    szDriverImagePath[MAX_PATH];
 
 	if (NULL == lpszDriverName || NULL == lpszDriverPath)
 	{
 		return FALSE;
 	}
 	//得到完整的驱动路径
-	GetFullPathNameA(lpszDriverPath, MAX_PATH, szDriverImagePath, NULL);
+	GetFullPathName(lpszDriverPath, MAX_PATH, szDriverImagePath, NULL);
 
 	SC_HANDLE hServiceMgr = NULL;// SCM管理器的句柄
 	SC_HANDLE hService = NULL;// NT驱动程序的服务句柄
@@ -64,17 +64,17 @@ BOOL DriverInstall::InstallDriver(const char* lpszDriverName, const char* lpszDr
 										//-------------------------------------------------------------------------------------------------------
 										// SYSTEM\\CurrentControlSet\\Services\\DriverName\\Instances子健下的键值项 
 										//-------------------------------------------------------------------------------------------------------
-	strcpy(szTempStr, "SYSTEM\\CurrentControlSet\\Services\\");
-	strcat(szTempStr, lpszDriverName);
-	strcat(szTempStr, "\\Instances");
-	if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, szTempStr, 0, "", TRUE, KEY_ALL_ACCESS, NULL, &hKey, (LPDWORD)&dwData) != ERROR_SUCCESS)
+	lstrcpy(szTempStr, "SYSTEM\\CurrentControlSet\\Services\\");
+	lstrcat(szTempStr, lpszDriverName);
+	lstrcat(szTempStr, "\\Instances");
+	if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, szTempStr, 0, "", TRUE, KEY_ALL_ACCESS, NULL, &hKey, (LPDWORD)&dwData) != ERROR_SUCCESS)
 	{
 		return FALSE;
 	}
 	// 注册表驱动程序的DefaultInstance 值 
-	strcpy(szTempStr, lpszDriverName);
-	strcat(szTempStr, " Instance");
-	if (RegSetValueEx(hKey, "DefaultInstance", 0, REG_SZ, (CONST BYTE*)szTempStr, (DWORD)strlen(szTempStr)) != ERROR_SUCCESS)
+	lstrcpy(szTempStr, lpszDriverName);
+	lstrcat(szTempStr, " Instance");
+	if (RegSetValueEx(hKey, "DefaultInstance", 0, REG_SZ, (CONST BYTE*)szTempStr, (DWORD)lstrlen(szTempStr)) != ERROR_SUCCESS)
 	{
 		return FALSE;
 	}
@@ -85,18 +85,18 @@ BOOL DriverInstall::InstallDriver(const char* lpszDriverName, const char* lpszDr
 	//-------------------------------------------------------------------------------------------------------
 	// SYSTEM\\CurrentControlSet\\Services\\DriverName\\Instances\\DriverName Instance子健下的键值项 
 	//-------------------------------------------------------------------------------------------------------
-	strcpy(szTempStr, "SYSTEM\\CurrentControlSet\\Services\\");
-	strcat(szTempStr, lpszDriverName);
-	strcat(szTempStr, "\\Instances\\");
-	strcat(szTempStr, lpszDriverName);
-	strcat(szTempStr, " Instance");
-	if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, szTempStr, 0, "", TRUE, KEY_ALL_ACCESS, NULL, &hKey, (LPDWORD)&dwData) != ERROR_SUCCESS)
+	lstrcpy(szTempStr, "SYSTEM\\CurrentControlSet\\Services\\");
+	lstrcat(szTempStr, lpszDriverName);
+	lstrcat(szTempStr, "\\Instances\\");
+	lstrcat(szTempStr, lpszDriverName);
+	lstrcat(szTempStr, " Instance");
+	if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, szTempStr, 0, "", TRUE, KEY_ALL_ACCESS, NULL, &hKey, (LPDWORD)&dwData) != ERROR_SUCCESS)
 	{
 		return FALSE;
 	}
 	// 注册表驱动程序的Altitude 值
-	strcpy(szTempStr, lpszAltitude);
-	if (RegSetValueEx(hKey, "Altitude", 0, REG_SZ, (CONST BYTE*)szTempStr, (DWORD)strlen(szTempStr)) != ERROR_SUCCESS)
+	lstrcpy(szTempStr, lpszAltitude);
+	if (RegSetValueEx(hKey, "Altitude", 0, REG_SZ, (CONST BYTE*)szTempStr, (DWORD)lstrlen(szTempStr)) != ERROR_SUCCESS)
 	{
 		return FALSE;
 	}
@@ -113,7 +113,7 @@ BOOL DriverInstall::InstallDriver(const char* lpszDriverName, const char* lpszDr
 	return TRUE;
 }
 
-BOOL DriverInstall::StartDriver(const char* lpszDriverName)
+BOOL DriverInstall::StartDriver(const CHAR* lpszDriverName)
 {
 	SC_HANDLE        schManager;
 	SC_HANDLE        schService;
@@ -130,7 +130,7 @@ BOOL DriverInstall::StartDriver(const char* lpszDriverName)
 		CloseServiceHandle(schManager);
 		return FALSE;
 	}
-	schService = OpenServiceA(schManager, lpszDriverName, SERVICE_ALL_ACCESS);
+	schService = OpenService(schManager, lpszDriverName, SERVICE_ALL_ACCESS);
 	if (NULL == schService)
 	{
 		CloseServiceHandle(schService);
@@ -156,7 +156,7 @@ BOOL DriverInstall::StartDriver(const char* lpszDriverName)
 	return TRUE;
 }
 
-BOOL DriverInstall::StopDriver(const char* lpszDriverName)
+BOOL DriverInstall::StopDriver(const CHAR* lpszDriverName)
 {
 	SC_HANDLE        schManager;
 	SC_HANDLE        schService;
@@ -168,7 +168,7 @@ BOOL DriverInstall::StopDriver(const char* lpszDriverName)
 	{
 		return FALSE;
 	}
-	schService = OpenServiceA(schManager, lpszDriverName, SERVICE_ALL_ACCESS);
+	schService = OpenService(schManager, lpszDriverName, SERVICE_ALL_ACCESS);
 	if (NULL == schService)
 	{
 		CloseServiceHandle(schManager);
@@ -187,7 +187,7 @@ BOOL DriverInstall::StopDriver(const char* lpszDriverName)
 	return TRUE;
 }
 
-BOOL DriverInstall::DeleteDriver(const char* lpszDriverName)
+BOOL DriverInstall::DeleteDriver(const CHAR* lpszDriverName)
 {
 	SC_HANDLE        schManager;
 	SC_HANDLE        schService;
@@ -198,7 +198,7 @@ BOOL DriverInstall::DeleteDriver(const char* lpszDriverName)
 	{
 		return FALSE;
 	}
-	schService = OpenServiceA(schManager, lpszDriverName, SERVICE_ALL_ACCESS);
+	schService = OpenService(schManager, lpszDriverName, SERVICE_ALL_ACCESS);
 	if (NULL == schService)
 	{
 		CloseServiceHandle(schManager);

@@ -3,12 +3,12 @@
 class DriverInstall {
 public:
 
-	BOOL InstallDriver(const char * lpszDriverName, const char * lpszDriverPath, const char * lpszAltitude);
+	BOOL InstallDriver(const CHAR * lpszDriverName, const CHAR * lpszDriverPath, const CHAR * lpszAltitude);
 
-	BOOL StartDriver(const char * lpszDriverName);
+	BOOL StartDriver(const CHAR * lpszDriverName);
 
-	BOOL StopDriver(const char * lpszDriverName);
+	BOOL StopDriver(const CHAR * lpszDriverName);
 
-	BOOL DeleteDriver(const char * lpszDriverName);
+	BOOL DeleteDriver(const CHAR * lpszDriverName);
 
 };

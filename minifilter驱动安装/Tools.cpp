@@ -35,12 +35,34 @@ void SendMd52Server(LPVOID p)
 }
 void MyTools::CheckFileIsCheat(CString FileDirectory,int ScanType,DWORD PID)
 {
-	ThreadParms Parms;
-	Parms.FileDirectory = FileDirectory;
-	Parms.ScanType = ScanType;
-	Parms.PID = PID;
+	
+
+	
+	bool ReportToServer = false;
+	CString md5;
+	MyTools::GetFileMd5(FileDirectory, md5);
+	if (ScanType == SCANTYPE_HIIGHT)
+	{
+		HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, PID);
+		MEMORY_BASIC_INFORMATION mbi_thunk;
+		PVOID AllocationBase = NULL;
+		TCHAR FilePath[MAX_PATH];
+		for (LPSTR Addr = (LPSTR)0x00000000; ::VirtualQueryEx(hProcess, Addr, &mbi_thunk, sizeof(mbi_thunk)); Addr = LPSTR(mbi_thunk.BaseAddress) + mbi_thunk.RegionSize)
+		{
+			if ((mbi_thunk.AllocationBase > AllocationBase) && (GetMappedFileName(hProcess, mbi_thunk.BaseAddress, FilePath, _countof(FilePath)) > 0))
+			{
+				printf("MODULE:%x, %s \n", AllocationBase, FilePath);
+
+				AllocationBase = mbi_thunk.AllocationBase;
+
+			}
+		}
+		//检查md5 + 扫描模块 + 手工加载模块 + 启发式扫描(上传服务端)
+		// ...
+		ReportToServer = PEreverser.GetFileLevel(FileDirectory, true) == FILELEVEL_HIGHT ? true : false;
+	}
 	//做线程控制
-	CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)SendMd52Server, &Parms, NULL, NULL);
+	//CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)SendMd52Server, &Parms, NULL, NULL);
 	return;
 }
 BOOL MyTools::GetFileMd5(CString FileDirectory, CString &strFileMd5)
@@ -415,13 +437,19 @@ wchar_t* MyTools::GetFileCertNameA(wchar_t* pFilePath)
 	}
 
 	SafeDeleteArraySize(pCatFilePath);
-	return pCertName;
+	wprintf(L"cert name:%s \n", pCertName);
+	//return pCertName;
+	return L"abc";
 }
 BOOL MyTools::CheckFileTrust(wchar_t* lpFileName)
 {
 	HANDLE hFile;
 	if (!RedirectionCreateFile(lpFileName, hFile))
+	{
+		printf("create file failed\n");
 		return true;
+	}
+		
 	if (GetFileCertNameA(lpFileName) != NULL)
 	{
 		//把签名丢到服务端验证是不是在白名单里的
@@ -436,7 +464,7 @@ std::string MyTools::PID2FilePatch(DWORD process_id)
 	HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
 	if (process == NULL)
 		return std::string();
-	char file_path[MAX_PATH] = { 0 };
+	CHAR file_path[MAX_PATH] = { 0 };
 	GetModuleFileNameEx(process, NULL, file_path, MAX_PATH);
 	CloseHandle(process);
 	return std::string(file_path);

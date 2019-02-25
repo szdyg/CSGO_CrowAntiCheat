@@ -33,4 +33,6 @@ public:
 
 	BOOL CheckFileTrust(wchar_t * lpFileName);
 	std::string PID2FilePatch(DWORD process_id);
+private:
+	//vector<ThreadParms> DllInfo;
 };

@@ -174,7 +174,7 @@ BOOL DriverInstall::StopDriver(const CHAR* lpszDriverName)
 		CloseServiceHandle(schManager);
 		return FALSE;
 	}
-	if (!ControlService(schService, SERVICE_CONTROL_STOP, &svcStatus) && (svcStatus.dwCurrentState != SERVICE_STOPPED))
+	if (!ControlService(schService, SERVICE_CONTROL_STOP, &svcStatus) /*&& (svcStatus.dwCurrentState != SERVICE_STOPPED)*/)
 	{
 		CloseServiceHandle(schService);
 		CloseServiceHandle(schManager);
@@ -215,4 +215,4 @@ BOOL DriverInstall::DeleteDriver(const CHAR* lpszDriverName)
 	CloseServiceHandle(schManager);
 
 	return TRUE;
-}
+} 

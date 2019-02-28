@@ -80,7 +80,7 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 	DWORD dwRet;
 	NMiniFilterPort PARM;
 	PARM.Port = 0;
-	HRESULT hr = pFilterConnectCommunicationPort(L"\\CrowACommunicationPort", 0, &PARM, sizeof(NMINIFILTERPORT), NULL, &port);
+	HRESULT hr = pFilterConnectCommunicationPort(L"\\CrowACommunicationPort", 0, NULL, 0, NULL, &port);
 	if (IS_ERROR(hr))
 	{
 		printf("ERROR: Connecting to filter port: 0x%08x\n", hr);
@@ -101,50 +101,59 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 		HRESULT hr = pFilterGetMessage(port, (PFILTER_MESSAGE_HEADER)&data, sizeof(USERCOMMAND_MESSAGE), NULL);
 		if (hr == S_OK)
 		{
+			std::string FilePatch;
 			switch (data.Notification.MSG_TYPE)
 			{
-			case ENUM_MSG_DLL:
-			{
-				printf("DLL : %ws \n", data.Notification.Contents); 
-				dataReplay.cmdMessage.Command = ENUM_PASS;
-				
-				if(Tools->CheckFileTrust(data.Notification.Contents))
+				case ENUM_MSG_DLL:
+			
+					printf("DLL : %ws \n", data.Notification.Contents); 
 					dataReplay.cmdMessage.Command = ENUM_PASS;
-				else
-				{
-					printf("Block DLL : %ws \n", data.Notification.Contents);
-					dataReplay.cmdMessage.Command = ENUM_BLOCK;
-					//不是我们的白名单中的签名加入到了游戏进程中.上传到服务器.
-					//..
-				}
 				
-				Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
-			}break;
-			case ENUM_MSG_HADLE_PROCESS:  
-			{
-				//ENUM_MSG_HADLE_PROCESS = 常规打开进程操作
-				std::string FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
-				if (FilePatch != std::string())
-					Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
-				else
-					printf("FilePatch is null , what ? \n");
-
-			}break;  
-			case ENUM_MSG_HADLE_THREAD:
-			{
+					if(Tools->CheckFileTrust(data.Notification.Contents))
+						dataReplay.cmdMessage.Command = ENUM_PASS;
+					else
+					{
+						printf("Block DLL : %ws \n", data.Notification.Contents);
+						dataReplay.cmdMessage.Command = ENUM_BLOCK;
+						//不是我们的白名单中的签名加入到了游戏进程中.上传到服务器.
+						//..
+					}
 				
-				std::string FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
-				if (FilePatch != std::string())
-					Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
-				else
-					printf("FilePatch is null , what ? \n");
+					Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
+					break;
+				case ENUM_MSG_HADLE_PROCESS:  
+			
+					//ENUM_MSG_HADLE_PROCESS = 常规打开进程操作
+					FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
+					if (FilePatch != std::string())
+						Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
+					else
+						printf("FilePatch is null , what ? \n");
 
-				//这个thread最高权限访问操作 来自于某个进程 有点可疑 为什么不上传到我们的服务器上呢?
-				// ...
-			}break;
-			default:
-				printf("Unknown MSG_TYPE :%d \n", data.Notification.MSG_TYPE);
-				break;
+					break;  
+				case ENUM_MSG_HADLE_THREAD:
+			
+				
+					FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
+					if (FilePatch != std::string())
+						Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
+					else
+						printf("FilePatch is null , what ? \n");
+
+					//这个thread最高权限访问操作 来自于某个进程 有点可疑 为什么不上传到我们的服务器上呢?
+					// ...
+					break;
+				case ENUM_MSG_LOADIMAGE:
+			
+					printf(" MSG DLL : %ws \n", data.Notification.Contents);
+					dataReplay.cmdMessage.Command = ENUM_PASS;
+					Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
+					break;
+					
+				default:
+				
+					dataReplay.cmdMessage.Command = ENUM_PASS;
+					break;
 			}
 			dataReplay.replayHeader.MessageId = data.MessageHeader.MessageId;
 			hr = pFilterReplyMessage(port, (PFILTER_REPLY_HEADER)&dataReplay, sizeof(COMMAND_MESSAGE) + sizeof(FILTER_REPLY_HEADER));

@@ -13,10 +13,8 @@ NTSTATUS ConnectNotifyCallback(IN PFLT_PORT ClientPort, IN PVOID ServerPortCooki
 
 	NMINIFILTERPORT PARM = ConnectionContext;
 	//DbgPrintEx(0, 0, "ClientPort %d \n", PARM->Port);
-	if (PARM->Port == 0)
-		g_ClientPort_DLL = ClientPort;
-	else if (PARM->Port == 1)
-		g_ClientPort_IMAGE = ClientPort;
+	
+	g_ClientPort_DLL = ClientPort;
 	return STATUS_SUCCESS;
 }
 VOID DisconnectNotifyCallback(_In_opt_ PVOID ConnectionCookie)
@@ -24,7 +22,7 @@ VOID DisconnectNotifyCallback(_In_opt_ PVOID ConnectionCookie)
 	PAGED_CODE();
 	UNREFERENCED_PARAMETER(ConnectionCookie);
 	FltCloseClientPort(Filter, &g_ClientPort_DLL);
-	FltCloseClientPort(Filter, &g_ClientPort_IMAGE);
+	//FltCloseClientPort(Filter, &g_ClientPort_DLL);
 }
 
 //我们要搞得IRP回调,拦截CreateFileMapping/CreateSection
@@ -325,26 +323,31 @@ BOOL NTAPI GetNtDeviceName(WCHAR * filename, WCHAR * ntname)
 
 	return FALSE;
 }
-FLT_PREOP_CALLBACK_STATUS PreCreateSection(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _Flt_CompletionContext_Outptr_ PVOID *CompletionContext) {
+FLT_PREOP_CALLBACK_STATUS PreCreateSection(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _Flt_CompletionContext_Outptr_ PVOID *CompletionContext) 
+{
+	//**//这里将来可能需要修改，过滤掉自身产生的消息
+	if (strstr(PsGetProcessImageFileName(PsGetCurrentProcess()), "CrowAnti"))
+	{
+		return FLT_PREOP_SUCCESS_NO_CALLBACK;
+	}
 	FLT_PREOP_CALLBACK_STATUS ret = FLT_PREOP_SUCCESS_NO_CALLBACK;
 	if (Data->Iopb->Parameters.AcquireForSectionSynchronization.SyncType == SyncTypeCreateSection) {
 		PFLT_FILE_NAME_INFORMATION pNameInfo = NULL;
 		if (NT_SUCCESS(FltGetFileNameInformation(Data, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &pNameInfo))) {
 			if (IsValidImage(FltObjects->Instance, FltObjects->FileObject)) {
 				if (FltGetRequestorProcessId(Data) == GamePid) {
-					PCOMMAND_MESSAGE notification = NULL;
+					COMMAND_MESSAGE notification ;
 					COMMAND_MESSAGE reply;
-					notification = ExAllocatePoolWithTag(NonPagedPool,
-						sizeof(COMMAND_MESSAGE),
-						'nacS');
+
+
 					DbgPrintEx(0, 0, "path is %S\n", pNameInfo->Name.Buffer);
-					GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
+					GetNTLinkName(pNameInfo->Name.Buffer, notification.Contents);
 					
 					reply.MSG_TYPE = ENUM_MSG_DLL;
-					notification->MSG_TYPE = ENUM_MSG_DLL;
+					notification.MSG_TYPE = ENUM_MSG_DLL;
 					//DbgPrintEx(0, 0, "pNameInfo->Name.Buffer is %wZ\n", pNameInfo->Name);
 					ULONG replyLength = sizeof(COMMAND_MESSAGE);
-					NTSTATUS status = FltSendMessage(Filter, &g_ClientPort_DLL, notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);		
+					NTSTATUS status = FltSendMessage(Filter, &g_ClientPort_DLL, &notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);		
 					if (NT_SUCCESS(status))
 					{
 						//DbgPrintEx(0, 0, "send succeed\n");
@@ -377,17 +380,18 @@ FLT_PREOP_CALLBACK_STATUS PreCreateSection(_Inout_ PFLT_CALLBACK_DATA Data, _In_
 				else
 				{
 					//对于其他的image 做一遍特征码扫描就行了
-					PCOMMAND_MESSAGE notification = NULL;
+					//PCOMMAND_MESSAGE notification = NULL;
 					COMMAND_MESSAGE reply;
-					notification = ExAllocatePoolWithTag(NonPagedPool,
-						sizeof(COMMAND_MESSAGE),
-						'nacS');
-					GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
+					COMMAND_MESSAGE notification;
+					//notification = ExAllocatePoolWithTag(NonPagedPool,
+					//	sizeof(COMMAND_MESSAGE),
+					//	'nacS');
+					GetNTLinkName(pNameInfo->Name.Buffer, notification.Contents);
 					reply.MSG_TYPE = ENUM_MSG_LOADIMAGE;
-					notification->MSG_TYPE = ENUM_MSG_LOADIMAGE;
-					notification->Pid = FltGetRequestorProcessId(Data);
+					notification.MSG_TYPE = ENUM_MSG_LOADIMAGE;
+					notification.Pid = FltGetRequestorProcessId(Data);
 					ULONG replyLength = sizeof(COMMAND_MESSAGE);
-					FltSendMessage(Filter, &g_ClientPort_IMAGE, notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
+					FltSendMessage(Filter, &g_ClientPort_DLL, &notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
 					return FLT_PREOP_SUCCESS_NO_CALLBACK;
 				}
 					
@@ -662,6 +666,10 @@ NTSTATUS Close(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 NTSTATUS Unload(_In_ FLT_FILTER_UNLOAD_FLAGS Flags) {
 	UNREFERENCED_PARAMETER(Flags);
 	DbgPrintEx(0, 0, "unload minifilter\n");
+	PsRemoveLoadImageNotifyRoutine(LoadImageNotifyRoutine);
+	PsRemoveCreateThreadNotifyRoutine(CreateThreadNotifyRoutine);
+	
+	FltCloseCommunicationPort(g_ServerPort);
 	FltUnregisterFilter(Filter);
 	return STATUS_SUCCESS;
 }

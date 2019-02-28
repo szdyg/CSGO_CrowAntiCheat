@@ -8,6 +8,7 @@ DriverInstall DriverInstaller;
 DriverConnecter Driver;
 void AntiCheatDriverIInstall()
 {
+	
 	if (DriverInstaller.InstallDriver(DRIVER_NAME, DRIVER_PATH, DRIVER_ALTITUDE))
 		printf("Install Driver Success \n");
 	else
@@ -19,16 +20,31 @@ void AntiCheatDriverIInstall()
 	}
 	else
 		printf("Start Driver Fail %d \n", GetLastError());
-	while (true)
-	{
-		;
-	}
+	//while (true)
+	//{
+	//	;
+	//}
 	//要写一个bug report程序
-	DriverInstaller.StopDriver(DRIVER_NAME);
-	DriverInstaller.DeleteDriver(DRIVER_NAME);
+	if (DriverInstaller.StopDriver(DRIVER_NAME))
+	{
+		printf("Stop Driver Success \n");
+	}
+	else
+	{
+		printf("Stop Driver failed \n");
+	}
+	if (DriverInstaller.DeleteDriver(DRIVER_NAME))
+	{
+		printf("Delete Driver Success \n");
+	}
+	else
+	{
+		printf("Delete Driver failed \n");
+	}
 }
 int main(void)
 {
+	//getchar();
 	/*
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, 11180);
 	MEMORY_BASIC_INFORMATION mbi_thunk;

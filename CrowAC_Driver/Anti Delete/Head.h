@@ -38,7 +38,7 @@ PFLT_FILTER Filter;
 
 PFLT_PORT g_ServerPort;
 PFLT_PORT g_ClientPort_DLL;
-PFLT_PORT g_ClientPort_IMAGE;
+//PFLT_PORT g_ClientPort_IMAGE;
 typedef struct _LDR_DATA_TABLE_ENTRY64
 {
 	LIST_ENTRY64    InLoadOrderLinks;

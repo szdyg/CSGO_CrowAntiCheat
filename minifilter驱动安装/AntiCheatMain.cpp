@@ -3,12 +3,26 @@
 #include "stdafx.h"
 #include "DriverInstall.h"
 #include "DriverConnecter.h"
+#include "Tools.h"
 
 DriverInstall DriverInstaller;  
 DriverConnecter Driver;
+MyTools* MyTools::p = NULL;
+
 void AntiCheatDriverIInstall()
 {
-	
+	//在反作弊启动的时候，对全部process进行扫描，看是否有已经运行的外挂
+	//之后在运行的外挂会经过minifilter
+	if (MyTools::getInstance()->CheckAllProcess())
+	{
+		;
+	}
+	else
+	{
+		//如果有违规程序，处理掉
+		;
+	}
+
 	if (DriverInstaller.InstallDriver(DRIVER_NAME, DRIVER_PATH, DRIVER_ALTITUDE))
 		printf("Install Driver Success \n");
 	else
@@ -20,10 +34,9 @@ void AntiCheatDriverIInstall()
 	}
 	else
 		printf("Start Driver Fail %d \n", GetLastError());
-	//while (true)
-	//{
-	//	;
-	//}
+
+	
+
 	//要写一个bug report程序
 	if (DriverInstaller.StopDriver(DRIVER_NAME))
 	{
@@ -44,6 +57,8 @@ void AntiCheatDriverIInstall()
 }
 int main(void)
 {
+	
+
 	//getchar();
 	/*
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, 11180);

@@ -477,6 +477,11 @@ OB_PREOP_CALLBACK_STATUS ProcessHandleCallbacks(PVOID RegistrationContext, POB_P
 	UNREFERENCED_PARAMETER(RegistrationContext);
 	if (GamePid == -1)
 		return OB_PREOP_SUCCESS;
+	//**//这里将来可能需要修改，过滤掉自身产生的消息
+	if (strstr(PsGetProcessImageFileName(PsGetCurrentProcess()), "CrowAnti"))
+	{
+		return OB_PREOP_SUCCESS;
+	}
 	//有点懒了必须要让那堆系统进程过,要不然会蓝屏
 	if (OperationInformation->KernelHandle)
 		return OB_PREOP_SUCCESS;
@@ -494,15 +499,17 @@ OB_PREOP_CALLBACK_STATUS ProcessHandleCallbacks(PVOID RegistrationContext, POB_P
 	{
 		DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,PID: %s \n", PsGetProcessImageFileName(PsGetCurrentProcess()));
 			
-		PCOMMAND_MESSAGE notification = NULL;
-		COMMAND_MESSAGE reply;
-	//	notification = ExAllocatePoolWithTag(NonPagedPool,sizeof(COMMAND_MESSAGE),'nacS');
-	//	GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
+	//	COMMAND_MESSAGE notification ;
+	//	COMMAND_MESSAGE reply;
+	////	notification = ExAllocatePoolWithTag(NonPagedPool,sizeof(COMMAND_MESSAGE),'nacS');
+	//	//GetNTLinkName(pNameInfo->Name.Buffer, notification->Contents);
 	//	reply.MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
-	//	notification->MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
-	//	notification->Pid = PsGetCurrentProcessId();
+	//	notification.MSG_TYPE = ENUM_MSG_HADLE_PROCESS;
+	//	strcpy(notification.Contents, "get process message");
+	//	notification.Pid = PsGetCurrentProcessId();
 	//	ULONG replyLength = sizeof(COMMAND_MESSAGE);
-	//	NTSTATUS status = FltSendMessage(Filter, &g_ClientPort, notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
+	//	DbgPrintEx(0, 0, "process send message");
+	//	NTSTATUS status = FltSendMessage(Filter, &g_ClientPort_DLL, &notification, sizeof(COMMAND_MESSAGE), &reply, &replyLength, NULL);
 	//	if (!NT_SUCCESS(status))
 	//		DbgPrintEx(0, 0, "ProcessHandleCallbacks! ,Send MeG Fail PID: %d \n", PsGetCurrentProcessId());
 		if (OperationInformation->Operation == OB_OPERATION_HANDLE_CREATE) // striping handle 

@@ -2,6 +2,9 @@
 #include "Tools.h"
 #include "DriverConnecter.h"
 #include "PEreverse.h"
+#include<windows.h>
+#include <Tlhelp32.h>
+
 PEreverse PEreverser;
 void SendMd52Server(LPVOID p)
 {
@@ -33,6 +36,16 @@ void SendMd52Server(LPVOID p)
 	}
 	//... send md5 to server
 }
+
+MyTools * MyTools::getInstance()
+{
+	if (p == NULL)
+	{
+		p = new MyTools();
+	}
+	return p;
+}
+
 void MyTools::CheckFileIsCheat(CString FileDirectory,int ScanType,DWORD PID)
 {
 	
@@ -468,4 +481,118 @@ std::string MyTools::PID2FilePatch(DWORD process_id)
 	GetModuleFileNameEx(process, NULL, file_path, MAX_PATH);
 	CloseHandle(process);
 	return std::string(file_path);
+}
+bool GetModuleInfo(int dwPID)
+{
+	HANDLE hModuleSnap = INVALID_HANDLE_VALUE;
+
+	MODULEENTRY32 me32;
+
+	// Take a snapshot of all modules in the specified process.
+
+	hModuleSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, dwPID);
+
+	if (hModuleSnap == INVALID_HANDLE_VALUE)
+
+	{
+
+		//printf("CreateToolhelp32Snapshot (of modules)");
+
+		return(FALSE);
+
+	}
+
+	// Set the size of the structure before using it.
+
+	me32.dwSize = sizeof(MODULEENTRY32);
+
+	// Retrieve information about the first module,
+
+	// and exit if unsuccessful
+
+	if (!Module32First(hModuleSnap, &me32))
+
+	{
+
+		//printf("Module32First");
+
+		CloseHandle(hModuleSnap); // Must clean up the snapshot object!
+
+		return(FALSE);
+
+	}
+
+	// Now walk the module list of the process,
+
+	// and display information about each module
+
+	do {
+
+		//printf("\n\n MODULE NAME: %s", me32.szModule);
+
+		//printf("\n executable = %s", me32.szExePath);
+		CString md5;
+	
+		MyTools::getInstance()->GetFileMd5(me32.szExePath,md5);
+		printf("md5 %s \n", md5);
+
+		//printf("\n process ID = 0x%08X", me32.th32ProcessID);
+
+		//printf("\n ref count (g) = 0x%04X", me32.GlblcntUsage);
+
+		//printf("\n ref count (p) = 0x%04X", me32.ProccntUsage);
+
+		//printf("\n base address = 0x%08X", (DWORD)me32.modBaseAddr); 
+
+		//printf("\n base size = %d", me32.modBaseSize);
+
+	} while (Module32Next(hModuleSnap, &me32));
+
+	CloseHandle(hModuleSnap);
+
+}
+bool MyTools::CheckAllProcess()  //检查所有进程，没有问题返回true
+{
+
+	typedef HANDLE
+	(WINAPI
+		*CreateToolhelp32SnapshotT)(
+			DWORD dwFlags,
+			DWORD th32ProcessID
+			);
+
+	CreateToolhelp32SnapshotT pCreateToolhelp32Snapshot = (CreateToolhelp32SnapshotT)GetProcAddress(LoadLibrary("KERNEL32.dll"), "CreateToolhelp32Snapshot");
+	auto snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	auto pe = PROCESSENTRY32W{ sizeof(PROCESSENTRY32W) };
+
+	typedef BOOL
+	(WINAPI
+		*Process32FirstWT)(
+			HANDLE hSnapshot,
+			LPPROCESSENTRY32W lppe
+			);
+
+	Process32FirstWT pProcess32FirstW = (Process32FirstWT)GetProcAddress(LoadLibrary("KERNEL32.dll"), "Process32FirstW");
+
+	typedef BOOL
+	(WINAPI
+		*Process32NextWT)(
+			HANDLE hSnapshot,
+			LPPROCESSENTRY32W lppe
+			);
+
+	Process32NextWT pProcess32NextW = (Process32NextWT)GetProcAddress(LoadLibrary("KERNEL32.dll"), "Process32NextW");
+
+	if (pProcess32FirstW(snapshot, &pe)) 
+	{
+		do 
+		{
+			//printf("pid is:%d\n\n\n\n", pe.th32ProcessID);
+			GetModuleInfo(pe.th32ProcessID);
+		} while (pProcess32NextW(snapshot, &pe));
+	}
+
+	CloseHandle(snapshot);
+	return 0;
+	return false;
 }

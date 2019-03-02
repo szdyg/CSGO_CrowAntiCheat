@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "DriverConnecter.h"
 #include "Tools.h"
-MyTools* Tools = new MyTools;
+
 typedef HRESULT
 (WINAPI
 	*FilterGetMessageT)(
@@ -109,7 +109,7 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 					printf("DLL : %ws \n", data.Notification.Contents); 
 					dataReplay.cmdMessage.Command = ENUM_PASS;
 				
-					if(Tools->CheckFileTrust(data.Notification.Contents))
+					if(MyTools::getInstance()->CheckFileTrust(data.Notification.Contents))
 						dataReplay.cmdMessage.Command = ENUM_PASS;
 					else
 					{
@@ -119,24 +119,24 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 						//..
 					}
 				
-					Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
+					MyTools::getInstance()->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
 					break;
 				case ENUM_MSG_HADLE_PROCESS:  
-			
+					printf("handle DLL : %d \n", data.Notification.Pid);
 					//ENUM_MSG_HADLE_PROCESS = 常规打开进程操作
-					FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
-					if (FilePatch != std::string())
-						Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
-					else
-						printf("FilePatch is null , what ? \n");
+					//FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
+					//if (FilePatch != std::string())
+					//	Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
+					//else
+					//	printf("FilePatch is null , what ? \n");
 
 					break;  
 				case ENUM_MSG_HADLE_THREAD:
 			
 				
-					FilePatch = Tools->PID2FilePatch(data.Notification.Pid);
+					FilePatch = MyTools::getInstance()->PID2FilePatch(data.Notification.Pid);
 					if (FilePatch != std::string())
-						Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
+						MyTools::getInstance()->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_HIIGHT, data.Notification.Pid);
 					else
 						printf("FilePatch is null , what ? \n");
 
@@ -147,7 +147,7 @@ void DriverConnecter::AntiCheatDriverCallbacks()
 			
 					printf(" MSG DLL : %ws \n", data.Notification.Contents);
 					dataReplay.cmdMessage.Command = ENUM_PASS;
-					Tools->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
+					MyTools::getInstance()->CheckFileIsCheat(data.Notification.Contents, SCANTYPE_FAST, data.Notification.Pid);
 					break;
 					
 				default:

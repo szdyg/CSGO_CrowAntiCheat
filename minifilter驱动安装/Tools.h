@@ -11,9 +11,15 @@ struct ThreadParms
 	int ScanType;
 	DWORD PID;
 };
-class MyTools {
-public:
 
+
+class MyTools 
+{
+public:
+	static MyTools* getInstance();
+
+	
+public:
 	//void SendMd52Server(CString FileDirectory);
 
 	void CheckFileIsCheat(CString FileDirectory, int ScanType,DWORD PID);
@@ -33,6 +39,11 @@ public:
 
 	BOOL CheckFileTrust(wchar_t * lpFileName);
 	std::string PID2FilePatch(DWORD process_id);
+	bool CheckAllProcess();
 private:
+
+	MyTools() {}
+	static MyTools *p;
 	//vector<ThreadParms> DllInfo;
 };
+

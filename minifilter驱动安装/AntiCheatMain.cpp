@@ -4,6 +4,7 @@
 #include "DriverInstall.h"
 #include "DriverConnecter.h"
 #include "Tools.h"
+#include"Client.h"
 
 DriverInstall DriverInstaller;  
 DriverConnecter Driver;
@@ -11,6 +12,14 @@ MyTools* MyTools::p = NULL;
 
 void AntiCheatDriverIInstall()
 {
+
+	//通过服务器获取必要信息
+	CClient Client;
+	Client.LoadSocketLib();
+	Client.ConnetToServer();
+	Client.SockSendMessage("hello world");
+	printf("already send message\n");
+	getchar();
 	//在反作弊启动的时候，对全部process进行扫描，看是否有已经运行的外挂
 	//之后在运行的外挂会经过minifilter
 	if (MyTools::getInstance()->CheckAllProcess())

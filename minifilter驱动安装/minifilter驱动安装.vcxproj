@@ -150,6 +150,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Client.h" />
     <ClInclude Include="Tools.h" />
     <ClInclude Include="DriverConnecter.h" />
     <ClInclude Include="DriverInstall.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="Tools.cpp" />
     <ClCompile Include="DriverConnecter.cpp" />
     <ClCompile Include="DriverInstall.cpp" />
